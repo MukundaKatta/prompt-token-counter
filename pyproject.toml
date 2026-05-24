@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "prompt-token-counter"
+version = "0.1.0"
+description = "Approximate token counts for LLM messages, system prompts, and tool definitions. Default chars/4 heuristic, BYO tokenizer callable, context-window budget helper. Zero deps."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Mukunda Rao Katta", email = "mukunda.vjcs6@gmail.com" }]
+keywords = [
+  "ai",
+  "llm",
+  "anthropic",
+  "openai",
+  "tokens",
+  "context-window",
+  "budget",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.4"]
+
+[project.urls]
+Homepage = "https://github.com/MukundaKatta/prompt-token-counter"
+Source = "https://github.com/MukundaKatta/prompt-token-counter"
+Issues = "https://github.com/MukundaKatta/prompt-token-counter/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/prompt_token_counter"]
