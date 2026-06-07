@@ -44,6 +44,14 @@ def test_count_uses_tokenize_callable_returning_int():
     assert c.count("hello") == 42
 
 
+def test_count_normalizes_bool_tokenize_return_to_int():
+    # bool is a subclass of int; count() must return a plain int, not a bool.
+    c = TokenCounter(tokenize=lambda s: True)
+    out = c.count("hello")
+    assert out == 1
+    assert type(out) is int
+
+
 def test_count_invalid_tokenize_return_raises():
     c = TokenCounter(tokenize=lambda s: 3.14)  # not int, not sized
     with pytest.raises(TypeError):
@@ -55,55 +63,78 @@ def test_count_invalid_tokenize_return_raises():
 
 def test_count_messages_plain_text():
     c = TokenCounter(per_message_overhead=0)
-    out = c.count_messages([
-        {"role": "user", "content": "a" * 100},
-    ])
+    out = c.count_messages(
+        [
+            {"role": "user", "content": "a" * 100},
+        ]
+    )
     assert out == 25  # 100/4
 
 
 def test_count_messages_includes_per_message_overhead():
     c = TokenCounter(per_message_overhead=10)
-    out = c.count_messages([
-        {"role": "user", "content": ""},
-        {"role": "assistant", "content": ""},
-    ])
+    out = c.count_messages(
+        [
+            {"role": "user", "content": ""},
+            {"role": "assistant", "content": ""},
+        ]
+    )
     assert out == 20
 
 
 def test_count_messages_text_block_content():
     c = TokenCounter(per_message_overhead=0)
-    out = c.count_messages([
-        {"role": "user", "content": [{"type": "text", "text": "a" * 40}]},
-    ])
+    out = c.count_messages(
+        [
+            {"role": "user", "content": [{"type": "text", "text": "a" * 40}]},
+        ]
+    )
     assert out == 10  # 40/4
 
 
 def test_count_messages_image_block_flat_overhead():
     c = TokenCounter(per_message_overhead=0)
-    out = c.count_messages([
-        {"role": "user", "content": [{"type": "image", "source": {}}]},
-    ])
+    out = c.count_messages(
+        [
+            {"role": "user", "content": [{"type": "image", "source": {}}]},
+        ]
+    )
     assert out == 256
 
 
 def test_count_messages_tool_use_block():
     c = TokenCounter(per_message_overhead=0)
-    out = c.count_messages([
-        {"role": "assistant", "content": [
-            {"type": "tool_use", "id": "u", "name": "search", "input": {"q": "x"}},
-        ]},
-    ])
+    out = c.count_messages(
+        [
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "u",
+                        "name": "search",
+                        "input": {"q": "x"},
+                    },
+                ],
+            },
+        ]
+    )
     # name="search" → 2 tokens, input='{"q":"x"}' → 3 tokens, +8 overhead = 13
     assert out > 0
 
 
 def test_count_messages_tool_result_block_string_content():
     c = TokenCounter(per_message_overhead=0)
-    out = c.count_messages([
-        {"role": "user", "content": [
-            {"type": "tool_result", "tool_use_id": "u", "content": "a" * 40},
-        ]},
-    ])
+    out = c.count_messages(
+        [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "tool_result", "tool_use_id": "u", "content": "a" * 40},
+                ],
+            },
+        ]
+    )
     assert out == 14  # 10 + 4 overhead
 
 
@@ -124,11 +155,18 @@ def test_count_messages_unknown_content_uses_repr():
 
 def test_count_tools_basic():
     c = TokenCounter(per_tool_overhead=0)
-    out = c.count_tools([{
-        "name": "search",
-        "description": "search the web",
-        "input_schema": {"type": "object", "properties": {"q": {"type": "string"}}},
-    }])
+    out = c.count_tools(
+        [
+            {
+                "name": "search",
+                "description": "search the web",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {"q": {"type": "string"}},
+                },
+            }
+        ]
+    )
     assert out > 0
 
 
@@ -140,9 +178,11 @@ def test_count_tools_per_tool_overhead():
 
 def test_count_tools_handles_openai_parameters_key():
     c = TokenCounter(per_tool_overhead=0)
-    out = c.count_tools([
-        {"name": "f", "description": "d", "parameters": {"type": "object"}},
-    ])
+    out = c.count_tools(
+        [
+            {"name": "f", "description": "d", "parameters": {"type": "object"}},
+        ]
+    )
     assert out > 0
 
 
@@ -153,7 +193,7 @@ def test_fits_returns_budget_result():
     c = TokenCounter(per_message_overhead=0)
     out = c.fits(
         context_window=1000,
-        system="a" * 40,    # 10 tokens
+        system="a" * 40,  # 10 tokens
         messages=[{"role": "user", "content": "b" * 40}],  # 10 tokens
     )
     assert isinstance(out, BudgetResult)
@@ -211,6 +251,8 @@ def test_fits_includes_tool_tokens():
 
 def test_byo_tokenizer_used_for_messages_and_tools():
     # 1 token per char
-    c = TokenCounter(tokenize=lambda s: list(s), per_message_overhead=0, per_tool_overhead=0)
+    c = TokenCounter(
+        tokenize=lambda s: list(s), per_message_overhead=0, per_tool_overhead=0
+    )
     out = c.count_messages([{"role": "user", "content": "hello"}])
     assert out == 5

@@ -109,7 +109,9 @@ class TokenCounter:
             return chars_per_4_estimate(text)
         result = self._tokenize(text)
         if isinstance(result, int):
-            return result
+            # bool is a subclass of int; normalize to a plain int so the
+            # return type is always exactly `int` as documented.
+            return int(result)
         try:
             return len(result)
         except TypeError as exc:
